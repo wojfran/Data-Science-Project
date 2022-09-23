@@ -39,18 +39,39 @@ monthly_sales = df.groupby('Order Month').count()['Order ID'].sort_values(ascend
 print(monthly_sales)
 
 # trying to determine the monthly earnings now
-# first I'll create a new column showing the total earnings from each row,
+# first I'll create a new column showing the total earnings from each row (amount of product times its price),
 # values had to be converted to numeric type for the multiplication
 df['Total Earnings'] = round((df['Quantity Ordered'].astype('int32') * df['Price Each'].astype('float32')), 2)
 
-# now I can use the sum method with groupby
+# now I can use the sum method with groupby to basically sum all the earnings from each row
+# corresponding to a chosen month
 monthly_earnings = df.groupby('Order Month')['Total Earnings'].sum().sort_values(ascending=False)
 print(monthly_earnings)
+
+# here I have created a list of  distinct months that could be found in the Dataframe
+# I had to convert their type into datetime so that they would sort properly
 months = list(set(df['Order Date'].str[0:3] + df['Order Date'].str[6:8]))
 months.sort(key=lambda month: datetime.strptime(month, '%m/%y'))
 print(months)
+
+# Here I realized that the whole column's type (Order Month) had to be converted to datetime either way,
+# as without it the total earnings for each month wouldn't align with the sorted months list
+df['Order Month'] = pd.to_datetime(df['Order Month'], format='%m/%y')
 sales = df.groupby('Order Month')['Total Earnings'].sum()
-# print(sales)
+
+# Here I am just checking out the Matplotlib library by presenting the manufactured data on a graph
+# The graph does not show a bar for month 01/20 but that is simply because of the low amount of products
+# sold in that month, presumably the sales data was provided at the beginning of 01/20
 plt.bar(months, sales)
-plt.show()
+plt.xticks(months)
+plt.ylabel('Total earnings for each month in USD ($)')
+plt.xlabel('Months')
+# plt.show()
+
+# What city had the highest number of sales?
+# Here I used the pandas Series.str.split() function to break up the purchase address and then used the second value in
+# the created list to create a new column called city
+df['City'] = (df['Purchase Address'].str.split(', ')).str[1]
+# Now by using a simple groupby combination with sum we can see how much money the company has earned in each city
+print(df.groupby('City')['Total Earnings'].sum())
 
